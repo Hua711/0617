@@ -143,14 +143,32 @@ def control():
         with arduino_lock:
             logger.info(f"發送命令到 Arduino: {led_command}")
             arduino.write(f"{led_command}\n".encode())
-            time.sleep(0.1)  # 等待 Arduino 處理
+            
+            # 等待 Arduino 完成動作，根據不同模式等待不同時間
+            if led_command == "WARNING":
+                time.sleep(15)  # 等待 5 次慢閃完成
+            elif led_command == "GOOD":
+                time.sleep(2)   # 等待 10 次快閃完成
+            elif led_command == "TEST":
+                time.sleep(1)   # 等待單次閃爍完成
+            
             led_status = arduino.readline().decode().strip()
             logger.info(f"Arduino 回應: {led_status}")
+            
+            # 根據 Arduino 回應決定顯示訊息
+            if led_status == "WARNING_DONE":
+                status_message = "LED 正在緩慢閃爍，提醒您注意健康！"
+            elif led_status == "GOOD_DONE":
+                status_message = "LED 快速閃爍，為您的好習慣喝采！"
+            elif led_status == "TEST_OK":
+                status_message = "LED 已確認閃爍。"
+            else:
+                status_message = f"LED 狀態: {led_status}"
             
             return jsonify({
                 'status': 'success',
                 'message': response_message,
-                'led_status': f'LED 模式: {led_command}'
+                'led_status': status_message
             })
     except Exception as e:
         logger.error(f"Arduino 控制錯誤: {str(e)}")
