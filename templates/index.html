@@ -3,78 +3,275 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LED 控制面板</title>
+    <title>健康互動小幫手</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: "Microsoft JhengHei", Arial, sans-serif;
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .input-section {
+            margin: 20px 0;
             text-align: center;
         }
-        .button-container {
-            margin: 20px 0;
+        textarea {
+            width: 90%;
+            height: 100px;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            resize: vertical;
+            font-size: 16px;
         }
         button {
-            font-size: 18px;
-            margin: 10px;
-            padding: 10px 20px;
-            cursor: pointer;
-            border: none;
-            border-radius: 5px;
-            background-color: #4CAF50;
+            background-color: #3498db;
             color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
         }
         button:disabled {
             background-color: #cccccc;
         }
-        #status {
+        .response {
             margin-top: 20px;
-            padding: 10px;
+            padding: 15px;
             border-radius: 5px;
+            background-color: #f8f9fa;
+            border-left: 4px solid #3498db;
+        }
+        .ai-message {
+            color: #2c3e50;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        .tips {
+            margin-top: 30px;
+            padding: 15px;
+            background-color: #ebf5fb;
+            border-radius: 5px;
+        }
+        .tips h3 {
+            color: #2980b9;
+            margin-top: 0;
+        }
+        .tips ul {
+            text-align: left;
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .led-guide {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #fff3e0;
+            border-radius: 5px;
+            border-left: 4px solid #ff9800;
+        }
+        .led-guide h3 {
+            color: #e65100;
+            margin-top: 0;
+        }
+        .led-pattern {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 4px;
+        }
+        .led-animation {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 15px;
+            background-color: #ffd54f;
+        }
+        .warning-blink {
+            animation: warning 3s infinite;
+        }
+        .good-blink {
+            animation: good 1s infinite;
+        }
+        .test-blink {
+            animation: test 2s infinite;
+        }
+        @keyframes warning {
+            0%, 100% { background-color: #ffd54f; box-shadow: 0 0 10px #ffd54f; }
+            50% { background-color: #666; box-shadow: none; }
+        }
+        @keyframes good {
+            0%, 100% { background-color: #ffd54f; box-shadow: 0 0 10px #ffd54f; }
+            50% { background-color: #666; box-shadow: none; }
+        }
+        @keyframes test {
+            0%, 90% { background-color: #ffd54f; box-shadow: 0 0 10px #ffd54f; }
+            91%, 100% { background-color: #666; box-shadow: none; }
         }
     </style>
 </head>
 <body>
-    <h1>LED 控制面板</h1>
-    <div class="button-container">
-        <button onclick="sendCommand('ON')">開燈</button>
-        <button onclick="sendCommand('OFF')">關燈</button>
-        <button onclick="sendCommand('BLINK')">閃爍</button>
-        <button onclick="sendCommand('STATUS')">檢查狀態</button>
+    <div class="container">
+        <h1>🏥 健康互動小幫手</h1>
+        
+        <div class="input-section">
+            <textarea id="userInput" placeholder="請分享今天的工作狀況，例如：
+- 今天坐了很久嗎？
+- 有做什麼運動嗎？
+- 感覺哪裡不舒服？"></textarea>
+            <br>
+            <button onclick="sendMessage()">送出回饋</button>
+        </div>
+
+        <div class="response" id="aiResponse">
+            <div class="ai-message">您好！我是您的健康小幫手，請告訴我今天的狀況，我會給您合適的建議 😊</div>
+        </div>
+
+        <div class="tips">
+            <h3>💡 每日健康小提醒</h3>
+            <ul>
+                <li>每工作一小時起身活動 5-10 分鐘</li>
+                <li>保持正確坐姿，螢幕高度與眼睛平行</li>
+                <li>適時做伸展運動，放鬆肩頸</li>
+                <li>多喝水，保持充足水分</li>
+            </ul>
+        </div>
+
+        <div class="led-guide">
+            <h3>💡 LED 指示燈說明</h3>
+            <div class="led-pattern">
+                <div class="led-animation warning-blink"></div>
+                <div>
+                    <strong>警示模式</strong>（緩慢閃爍）
+                    <p>當系統偵測到：久坐、疲勞、不適等狀況時，LED 會緩慢閃爍提醒您注意健康。</p>
+                </div>
+            </div>
+            <div class="led-pattern">
+                <div class="led-animation good-blink"></div>
+                <div>
+                    <strong>鼓勵模式</strong>（快速閃爍）
+                    <p>當您報告有運動、散步、伸展等好習慣時，LED 會快速閃爍表示讚許。</p>
+                </div>
+            </div>
+            <div class="led-pattern">
+                <div class="led-animation test-blink"></div>
+                <div>
+                    <strong>測試模式</strong>（單次閃爍）
+                    <p>系統啟動或測試連接時，LED 會進行單次閃爍確認正常運作。</p>
+                </div>
+            </div>
+        </div>
     </div>
-    <div id="status"></div>
 
     <script>
-        async function sendCommand(command) {
-            const buttons = document.querySelectorAll('button');
-            buttons.forEach(button => button.disabled = true);
+        // 確保使用正確的 API 端點
+        const API_URL = 'http://localhost:5001';
+        
+        // 檢查 Arduino 連接狀態
+        async function checkArduinoStatus() {
+            try {
+                const response = await fetch(`${API_URL}/status`);
+                const data = await response.json();
+                return data.status === 'success';
+            } catch (error) {
+                console.error('狀態檢查錯誤:', error);
+                return false;
+            }
+        }
+        
+        async function sendMessage() {
+            const userInput = document.getElementById('userInput').value;
+            const button = document.querySelector('button');
+            const responseDiv = document.getElementById('aiResponse');
+            
+            if (!userInput.trim()) {
+                alert('請輸入一些內容！');
+                return;
+            }
+            
+            button.disabled = true;
+            responseDiv.innerHTML = '<div class="ai-message">思考中...</div>';
             
             try {
-                const response = await fetch('/control', {
+                // 先檢查 Arduino 狀態
+                const isConnected = await checkArduinoStatus();
+                if (!isConnected) {
+                    responseDiv.innerHTML = '<div class="ai-message">⚠️ Arduino 未連接，請檢查連線後重試。</div>';
+                    return;
+                }
+                
+                const response = await fetch(`${API_URL}/control`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ command: command })
+                    body: JSON.stringify({ message: userInput })
                 });
                 
-                const data = await response.json();
-                const statusDiv = document.getElementById('status');
-                
-                if (data.status === 'success') {
-                    statusDiv.style.backgroundColor = '#dff0d8';
-                    statusDiv.style.color = '#3c763d';
-                } else {
-                    statusDiv.style.backgroundColor = '#f2dede';
-                    statusDiv.style.color = '#a94442';
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 
-                statusDiv.textContent = data.message;
+                const data = await response.json();
+                
+                if (data.status === 'error') {
+                    responseDiv.innerHTML = `
+                        <div class="ai-message">
+                            ⚠️ ${data.message}
+                            <div style="margin-top: 10px; font-size: 14px; color: #666;">
+                                ${data.led_status || ''}
+                            </div>
+                        </div>`;
+                    return;
+                }
+                
+                responseDiv.innerHTML = `
+                    <div class="ai-message">
+                        ${data.message}
+                        <div style="margin-top: 10px; font-size: 14px; color: #666;">
+                            ${data.led_status}
+                        </div>
+                    </div>`;
+                
             } catch (error) {
-                document.getElementById('status').textContent = '操作失敗：' + error;
+                console.error('錯誤:', error);
+                responseDiv.innerHTML = `
+                    <div class="ai-message">
+                        抱歉，發生了一些錯誤：
+                        <div style="margin-top: 10px; font-size: 14px; color: #ff0000;">
+                            ${error.message}
+                        </div>
+                        <div style="margin-top: 5px; font-size: 12px; color: #666;">
+                            請確認：
+                            <ul>
+                                <li>Arduino 是否正確連接</li>
+                                <li>伺服器是否正在運行</li>
+                                <li>網路連線是否正常</li>
+                            </ul>
+                        </div>
+                    </div>`;
             } finally {
-                buttons.forEach(button => button.disabled = false);
+                button.disabled = false;
             }
         }
     </script>
