@@ -146,9 +146,9 @@ def control():
             
             # 等待 Arduino 完成動作，根據不同模式等待不同時間
             if led_command == "WARNING":
-                time.sleep(15)  # 等待 5 次慢閃完成
+                time.sleep(3)   # 等待 15 次快閃完成 (15 * 0.2秒)
             elif led_command == "GOOD":
-                time.sleep(2)   # 等待 10 次快閃完成
+                time.sleep(15)  # 等待 5 次慢閃完成 (5 * 3秒)
             elif led_command == "TEST":
                 time.sleep(1)   # 等待單次閃爍完成
             
