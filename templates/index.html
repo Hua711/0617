@@ -19,6 +19,72 @@
             border-radius: 10px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
+        /* 彈窗樣式 */
+        .popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 1000;
+            animation: popup-appear 0.3s ease-out;
+            text-align: center;
+        }
+        .popup-warning {
+            background-color: #ffe0e0;
+            border: 2px solid #ff6b6b;
+            color: #d63031;
+        }
+        .popup-good {
+            background-color: #e0ffe0;
+            border: 2px solid #6bff6b;
+            color: #27ae60;
+        }
+        .popup-test {
+            background-color: #e0e0ff;
+            border: 2px solid #6b6bff;
+            color: #3498db;
+        }
+        .popup-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        .popup-message {
+            font-size: 18px;
+            margin: 10px 0;
+        }
+        .popup-close {
+            margin-top: 15px;
+            padding: 8px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        .popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+        @keyframes popup-appear {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -60%);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
+        }
         h1 {
             color: #2c3e50;
             text-align: center;
@@ -132,6 +198,33 @@
             <div class="ai-message">您好！我是您的健康小幫手，請告訴我今天的狀況，我會給您合適的建議 😊</div>
         </div>
 
+        <!-- 彈窗遮罩 -->
+        <div id="popupOverlay" class="popup-overlay"></div>
+
+        <!-- 警示彈窗 -->
+        <div id="warningPopup" class="popup popup-warning">
+            <div class="popup-icon">⚠️</div>
+            <div class="popup-message"></div>
+            <div class="led-animation warning-blink" style="margin: 15px auto;"></div>
+            <button class="popup-close" style="background-color: #ff6b6b; color: white;" onclick="closePopup('warningPopup')">我知道了</button>
+        </div>
+
+        <!-- 鼓勵彈窗 -->
+        <div id="goodPopup" class="popup popup-good">
+            <div class="popup-icon">🌟</div>
+            <div class="popup-message"></div>
+            <div class="led-animation good-blink" style="margin: 15px auto;"></div>
+            <button class="popup-close" style="background-color: #6bff6b; color: white;" onclick="closePopup('goodPopup')">太棒了</button>
+        </div>
+
+        <!-- 確認彈窗 -->
+        <div id="testPopup" class="popup popup-test">
+            <div class="popup-icon">✅</div>
+            <div class="popup-message"></div>
+            <div class="led-animation test-blink" style="margin: 15px auto;"></div>
+            <button class="popup-close" style="background-color: #6b6bff; color: white;" onclick="closePopup('testPopup')">確認</button>
+        </div>
+
         <div class="led-guide">
             <h3>💡 LED 指示燈說明</h3>
             <div class="led-pattern">
@@ -173,6 +266,26 @@
                 return false;
             }
         }
+
+        // 顯示彈窗
+        function showPopup(type, message) {
+            const overlay = document.getElementById('popupOverlay');
+            const popup = document.getElementById(`${type}Popup`);
+            const messageDiv = popup.querySelector('.popup-message');
+            
+            messageDiv.textContent = message;
+            overlay.style.display = 'block';
+            popup.style.display = 'block';
+        }
+
+        // 關閉彈窗
+        function closePopup(popupId) {
+            const overlay = document.getElementById('popupOverlay');
+            const popup = document.getElementById(popupId);
+            
+            overlay.style.display = 'none';
+            popup.style.display = 'none';
+        }
         
         async function sendMessage() {
             const userInput = document.getElementById('userInput').value;
@@ -180,7 +293,7 @@
             const responseDiv = document.getElementById('aiResponse');
             
             if (!userInput.trim()) {
-                alert('請輸入一些內容！');
+                showPopup('test', '請輸入一些內容！');
                 return;
             }
             
@@ -191,6 +304,7 @@
                 // 先檢查 Arduino 狀態
                 const isConnected = await checkArduinoStatus();
                 if (!isConnected) {
+                    showPopup('test', 'Arduino 未連接，請檢查連線後重試。');
                     responseDiv.innerHTML = '<div class="ai-message">⚠️ Arduino 未連接，請檢查連線後重試。</div>';
                     return;
                 }
@@ -210,6 +324,7 @@
                 const data = await response.json();
                 
                 if (data.status === 'error') {
+                    showPopup('test', data.message);
                     responseDiv.innerHTML = `
                         <div class="ai-message">
                             ⚠️ ${data.message}
@@ -218,6 +333,15 @@
                             </div>
                         </div>`;
                     return;
+                }
+                
+                // 根據回應內容決定顯示哪種彈窗
+                if (data.message.includes('請注意！')) {
+                    showPopup('warning', data.message);
+                } else if (data.message.includes('太棒了！')) {
+                    showPopup('good', data.message);
+                } else {
+                    showPopup('test', data.message);
                 }
                 
                 responseDiv.innerHTML = `
@@ -230,6 +354,7 @@
                 
             } catch (error) {
                 console.error('錯誤:', error);
+                showPopup('test', '發生錯誤，請檢查連線狀態。');
                 responseDiv.innerHTML = `
                     <div class="ai-message">
                         抱歉，發生了一些錯誤：
@@ -247,6 +372,7 @@
                     </div>`;
             } finally {
                 button.disabled = false;
+                document.getElementById('userInput').value = '';
             }
         }
     </script>
