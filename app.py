@@ -23,20 +23,27 @@ def init_arduino():
     global arduino
     try:
         with arduino_lock:
+            logger.info("開始初始化 Arduino 連接...")
+            
             # 如果已經有連接，先關閉
             if arduino:
                 try:
                     arduino.close()
-                except:
-                    pass
+                    logger.info("關閉現有連接")
+                except Exception as e:
+                    logger.warning(f"關閉現有連接時出錯: {str(e)}")
                 arduino = None
 
             # 自動尋找 Arduino 端口
             ports = list(serial.tools.list_ports.comports())
+            logger.info(f"找到的串口列表: {[p.device for p in ports]}")
+            
             arduino_port = None
             for p in ports:
-                if 'usbmodem' in p.device.lower() or 'cu.usbmodem' in p.device.lower():
+                logger.info(f"檢查串口 {p.device}...")
+                if 'usbmodem' in p.device.lower():
                     arduino_port = p.device
+                    logger.info(f"找到 Arduino 端口: {arduino_port}")
                     break
 
             if not arduino_port:
@@ -46,7 +53,9 @@ def init_arduino():
             # 建立連接並重試最多3次
             for attempt in range(3):
                 try:
+                    logger.info(f"嘗試連接 Arduino ({attempt + 1}/3)...")
                     arduino = serial.Serial(arduino_port, 9600, timeout=1)
+                    logger.info("串口打開成功")
                     time.sleep(2)  # 等待 Arduino 重置
                     
                     # 測試連接
