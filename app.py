@@ -54,9 +54,38 @@ def init_arduino():
             for attempt in range(3):
                 try:
                     logger.info(f"嘗試連接 Arduino ({attempt + 1}/3)...")
-                    arduino = serial.Serial(arduino_port, 9600, timeout=1)
+                    arduino = serial.Serial(arduino_port, 9600, timeout=3)
                     logger.info("串口打開成功")
                     time.sleep(2)  # 等待 Arduino 重置
+                    
+                    # 清空緩衝區
+                    arduino.flushInput()
+                    arduino.flushOutput()
+                    
+                    # 等待 Arduino 就緒訊息
+                    for _ in range(5):  # 最多等待 5 個訊息
+                        if arduino.in_waiting:
+                            response = arduino.readline().decode().strip()
+                            logger.info(f"收到 Arduino 訊息: {response}")
+                            if "Arduino ready!" in response:
+                                logger.info("Arduino 已就緒！")
+                                break
+                    
+                    # 測試連接
+                    logger.info("發送測試命令...")
+                    arduino.write(b"TEST\n")
+                    
+                    # 等待回應
+                    start_time = time.time()
+                    while time.time() - start_time < 3:  # 最多等待3秒
+                        if arduino.in_waiting:
+                            response = arduino.readline().decode().strip()
+                            logger.info(f"收到測試回應: {response}")
+                            if response == "TEST_OK":
+                                logger.info("連接測試成功！")
+                                return arduino
+                    
+                    logger.warning("未收到正確的測試回應")
                     
                     # 測試連接
                     arduino.write(b"TEST\n")
@@ -139,13 +168,16 @@ def control():
     # 決定 LED 模式
     if "久坐" in message or "痛" in message or "累" in message or "不舒服" in message:
         led_command = "WARNING"
-        response_message = "請注意！建議您起身活動一下，做些簡單的伸展運動。LED 將以警告模式慢閃提醒。"
+        response_message = "請注意！建議您起身活動一下，做些簡單的伸展運動。"
+        led_status_message = "LED 正在進行警告模式：快速閃爍 15 次"
     elif "運動" in message or "散步" in message or "伸展" in message:
         led_command = "GOOD"
-        response_message = "太棒了！保持運動習慣對健康很有幫助。LED 將以快閃模式表示稱讚。"
+        response_message = "太棒了！保持運動習慣對健康很有幫助。"
+        led_status_message = "LED 正在進行鼓勵模式：緩慢閃爍 5 次"
     else:
         led_command = "TEST"
-        response_message = "收到您的訊息。LED 將閃爍一次表示確認。"
+        response_message = "收到您的訊息。"
+        led_status_message = "LED 正在進行確認模式：單次閃爍"
 
     # 控制 LED
     try:
@@ -153,32 +185,14 @@ def control():
             logger.info(f"發送命令到 Arduino: {led_command}")
             arduino.write(f"{led_command}\n".encode())
             
-            # 等待 Arduino 完成動作，根據不同模式等待不同時間
-            if led_command == "WARNING":
-                time.sleep(3)   # 等待 15 次快閃完成 (15 * 0.2秒)
-            elif led_command == "GOOD":
-                time.sleep(15)  # 等待 5 次慢閃完成 (5 * 3秒)
-            elif led_command == "TEST":
-                time.sleep(1)   # 等待單次閃爍完成
-            
-            led_status = arduino.readline().decode().strip()
-            logger.info(f"Arduino 回應: {led_status}")
-            
-            # 根據 Arduino 回應決定顯示訊息
-            if led_status == "WARNING_DONE":
-                status_message = "LED 正在緩慢閃爍，提醒您注意健康！"
-            elif led_status == "GOOD_DONE":
-                status_message = "LED 快速閃爍，為您的好習慣喝采！"
-            elif led_status == "TEST_OK":
-                status_message = "LED 已確認閃爍。"
-            else:
-                status_message = f"LED 狀態: {led_status}"
-            
+            # 立即返回響應，不等待 LED 閃爍完成
             return jsonify({
                 'status': 'success',
                 'message': response_message,
-                'led_status': status_message
+                'led_status': led_status_message,
+                'command': led_command  # 添加指令類型以便前端識別
             })
+            
     except Exception as e:
         logger.error(f"Arduino 控制錯誤: {str(e)}")
         # 發生錯誤時重置連接

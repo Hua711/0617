@@ -55,6 +55,8 @@
         .popup-message {
             font-size: 18px;
             margin: 10px 0;
+            white-space: pre-line;  /* 支援換行 */
+            line-height: 1.5;
         }
         .popup-close {
             margin-top: 15px;
@@ -335,15 +337,26 @@
                     return;
                 }
                 
-                // 根據回應內容決定顯示哪種彈窗
-                if (data.message.includes('請注意！')) {
-                    showPopup('warning', data.message);
-                } else if (data.message.includes('太棒了！')) {
-                    showPopup('good', data.message);
-                } else {
-                    showPopup('test', data.message);
+                // 根據命令類型決定彈窗類型
+                let popupType, popupMessage;
+                switch (data.command) {
+                    case 'WARNING':
+                        popupType = 'warning';
+                        popupMessage = `${data.message}\n\n${data.led_status}`;
+                        break;
+                    case 'GOOD':
+                        popupType = 'good';
+                        popupMessage = `${data.message}\n\n${data.led_status}`;
+                        break;
+                    default:
+                        popupType = 'test';
+                        popupMessage = `${data.message}\n\n${data.led_status}`;
                 }
                 
+                // 立即顯示彈窗
+                showPopup(popupType, popupMessage);
+                
+                // 更新回應區域
                 responseDiv.innerHTML = `
                     <div class="ai-message">
                         ${data.message}
