@@ -5,68 +5,212 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>健康互動小幫手</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&display=swap');
+        
+        :root {
+            --color-primary: #d403e1;
+            --color-secondary: #03ccff;
+            --color-tertiary: #09fbff;
+            --color-accent: #460071;
+            --gradient-primary: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+            --gradient-secondary: linear-gradient(135deg, var(--color-secondary), var(--color-tertiary));
+            --gradient-text: linear-gradient(135deg, #FF6B6B, #4ECDC4);
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+        }
+
+        @keyframes liquidLight {
+            0%, 100% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        @keyframes floating {
+            0%, 100% {
+                transform: translateY(0) translateX(0);
+            }
+            25% {
+                transform: translateY(-1px) translateX(0.5px);
+            }
+            75% {
+                transform: translateY(1px) translateX(-0.5px);
+            }
+        }
+
         body {
-            font-family: "Microsoft JhengHei", Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-            color: #333;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Microsoft JhengHei", Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #080c14;
+            color: #ffffff;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
         .container {
-            background-color: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            flex: 1;
+            background: linear-gradient(180deg, rgba(8,12,20,0.95) 0%, rgba(16,20,36,0.98) 100%);
+            padding: var(--spacing-md) var(--spacing-sm);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .title {
+            font-size: 2.8em;
+            font-weight: 600;
+            text-align: center;
+            margin: 2rem 0 3rem;
+            color: #ffffff;
+            position: relative;
+            z-index: 2;
+        }
+        .content-wrapper {
+            width: 100%;
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 var(--spacing-md);
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+        .glow-effect {
+            position: fixed;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.15;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .glow-1 {
+            background: var(--color-primary);
+            top: 10%;
+            left: 15%;
+        }
+        .glow-2 {
+            background: var(--color-secondary);
+            top: 40%;
+            right: 15%;
+        }
+        .glow-3 {
+            background: var(--color-tertiary);
+            bottom: 20%;
+            left: 25%;
+        }
+        .input-section {
+            margin: var(--spacing-md) 0;
+            position: relative;
+        }
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            color: #ffffff;
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
+            font-size: 1em;
+            line-height: 1.5;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: rgba(3, 204, 255, 0.4);
+            background: rgba(255,255,255,0.05);
+            box-shadow: 0 4px 20px rgba(3, 204, 255, 0.1);
+        }
+        button {
+            background: var(--gradient-secondary);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 1rem 0;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(3, 204, 255, 0.4);
+        }
+        .led-info {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: var(--spacing-lg);
+            margin-top: var(--spacing-md);
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .led-info h3 {
+            color: var(--color-secondary);
+            margin: 0 0 var(--spacing-md);
+            font-size: 1.1em;
+            letter-spacing: 0.02em;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+        }
+        .led-info h3::before {
+            content: '💡';
+            font-size: 1.2em;
+        }
+        .led-info p {
+            margin: var(--spacing-xs) 0;
+            padding: var(--spacing-xs) var(--spacing-sm);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.02);
+        }
+        .led-info p:hover {
+            background: rgba(255,255,255,0.04);
+            transform: translateX(4px);
+        }
+        .status-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .status-dot.warning {
+            background: var(--color-primary);
+            box-shadow: 0 0 10px var(--color-primary);
+        }
+        .status-dot.good {
+            background: var(--color-secondary);
+            box-shadow: 0 0 10px var(--color-secondary);
+        }
+        .status-dot.test {
+            background: var(--color-tertiary);
+            box-shadow: 0 0 10px var(--color-tertiary);
+        }
+        .response-modal {
+            background: rgba(8,12,20,0.95);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
         }
         /* 彈窗樣式 */
-        .popup {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            z-index: 1000;
-            animation: popup-appear 0.3s ease-out;
-            text-align: center;
-        }
-        .popup-warning {
-            background-color: #ffe0e0;
-            border: 2px solid #ff6b6b;
-            color: #d63031;
-        }
-        .popup-good {
-            background-color: #e0ffe0;
-            border: 2px solid #6bff6b;
-            color: #27ae60;
-        }
-        .popup-test {
-            background-color: #e0e0ff;
-            border: 2px solid #6b6bff;
-            color: #3498db;
-        }
-        .popup-icon {
-            font-size: 48px;
-            margin-bottom: 10px;
-        }
-        .popup-message {
-            font-size: 18px;
-            margin: 10px 0;
-            white-space: pre-line;  /* 支援換行 */
-            line-height: 1.5;
-        }
-        .popup-close {
-            margin-top: 15px;
-            padding: 8px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background-color 0.3s;
-        }
         .popup-overlay {
             display: none;
             position: fixed;
@@ -74,320 +218,469 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+        }
+        
+        .popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #1a1a1a;
+            padding: var(--spacing-xl) var(--spacing-lg);
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
             z-index: 999;
-        }
-        @keyframes popup-appear {
-            from {
-                opacity: 0;
-                transform: translate(-50%, -60%);
-            }
-            to {
-                opacity: 1;
-                transform: translate(-50%, -50%);
-            }
-        }
-        h1 {
-            color: #2c3e50;
             text-align: center;
-            margin-bottom: 30px;
+            min-width: 300px;
         }
-        .input-section {
-            margin: 20px 0;
-            text-align: center;
+        
+        .popup-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
         }
-        textarea {
-            width: 90%;
-            height: 100px;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            resize: vertical;
+        
+        .popup-message {
+            margin: var(--spacing-md) 0;
+            color: #ffffff;
             font-size: 16px;
+            line-height: 1.6;
         }
-        button {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s;
-        }
-        button:hover {
-            background-color: #2980b9;
-        }
-        button:disabled {
-            background-color: #cccccc;
-        }
-        .response {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 5px;
-            background-color: #f8f9fa;
-            border-left: 4px solid #3498db;
-        }
-        .ai-message {
-            color: #2c3e50;
-            font-size: 16px;
-            line-height: 1.5;
-        }
-        .led-guide {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #fff3e0;
-            border-radius: 5px;
-            border-left: 4px solid #ff9800;
-        }
-        .led-guide h3 {
-            color: #e65100;
-            margin-top: 0;
-        }
-        .led-pattern {
-            display: flex;
-            align-items: center;
-            margin: 10px 0;
-            padding: 8px;
-            background: rgba(255, 255, 255, 0.5);
-            border-radius: 4px;
-        }
+        
         .led-animation {
             width: 20px;
             height: 20px;
             border-radius: 50%;
-            margin-right: 15px;
-            background-color: #ffd54f;
         }
+        
         .warning-blink {
-            animation: warning 0.4s infinite;
+            background-color: var(--color-primary);
+            animation: blink 0.5s infinite;
         }
+        
         .good-blink {
-            animation: good 3s infinite;
+            background-color: var(--color-secondary);
+            animation: blink 1.5s infinite;
         }
+        
         .test-blink {
-            animation: test 2s infinite;
+            background-color: var(--color-tertiary);
+            animation: single-blink 2s forwards;
         }
-        @keyframes warning {
-            0%, 100% { background-color: #ffd54f; box-shadow: 0 0 10px #ffd54f; }
-            50% { background-color: #666; box-shadow: none; }
+        
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
         }
-        @keyframes good {
-            0%, 100% { background-color: #ffd54f; box-shadow: 0 0 10px #ffd54f; }
-            50% { background-color: #666; box-shadow: none; }
+        
+        @keyframes single-blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
         }
-        @keyframes test {
-            0%, 90% { background-color: #ffd54f; box-shadow: 0 0 10px #ffd54f; }
-            91%, 100% { background-color: #666; box-shadow: none; }
+
+        .liquid-title-container {
+            position: relative;
+            padding: var(--spacing-xl) var(--spacing-xl) calc(var(--spacing-xl) * 1.2);
+            margin: var(--spacing-sm) 0;
+            text-align: center;
+            z-index: 2;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .liquid-title {
+            font-family: 'Playfair Display', serif;
+            font-weight: 600;
+            background: linear-gradient(
+                120deg,
+                #FF6B6B,
+                #4ECDC4
+            );
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: liquidLight 8s ease-in-out infinite;
+            background-size: 200% 100%;
+            position: relative;
+            letter-spacing: -0.02em;
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .liquid-title.en {
+            font-size: 2.6em;
+            margin-bottom: 0.2rem;
+        }
+
+        .liquid-title.zh {
+            font-family: "SF Pro TC", "SF Pro Text", "Microsoft JhengHei", sans-serif;
+            font-size: 2.2em;
+        }
+
+        .liquid-glass {
+            position: absolute;
+            inset: -8px -32px;  /* 擴大玻璃效果的範圍 */
+            background: linear-gradient(
+                120deg,
+                rgba(255,255,255,0.1),
+                rgba(255,255,255,0.05) 30%,
+                rgba(255,255,255,0.05) 70%,
+                rgba(255,255,255,0.1)
+            );
+            border-radius: 24px;  /* 稍微增加圓角 */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 
+                0 4px 24px -1px rgba(0,0,0,0.1),
+                0 0 0 1px rgba(255,255,255,0.1) inset;
+            animation: floating 5s ease-in-out infinite;
+        }
+
+        .liquid-glass::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            padding: 1px;
+            background: linear-gradient(
+                120deg,
+                rgba(255,255,255,0.4),
+                rgba(255,255,255,0.1) 30%,
+                rgba(255,255,255,0.1) 70%,
+                rgba(255,255,255,0.4)
+            );
+            border-radius: 20px;
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+            -webkit-mask-composite: destination-out;
+        }
+
+        .liquid-glass::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 20px;
+            background: radial-gradient(
+                circle at 50% 0%,
+                rgba(255,255,255,0.1),
+                transparent 70%
+            );
+        }
+
+        .submit-button {
+            background: linear-gradient(135deg, #4ECDC4, #03ccff);
+            border: none;
+            padding: 12px 36px;
+            font-size: 1em;
+            border-radius: 16px;
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+            font-family: "SF Pro TC", "SF Pro Text", "Microsoft JhengHei", sans-serif;
+            letter-spacing: 0.5px;
+            box-shadow: 0 8px 24px rgba(3, 204, 255, 0.2);
+        }
+
+        .submit-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.2),
+                transparent
+            );
+            transition: 0.5s;
+        }
+
+        .submit-button:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 12px 32px rgba(3, 204, 255, 0.3);
+            background: linear-gradient(135deg, #45c1b9, #00b8e6);
+        }
+
+        .submit-button:hover::before {
+            left: 100%;
+        }
+
+        .submit-button:active {
+            transform: translateY(1px) scale(0.98);
+        }
+
+        .submit-button-wrapper {
+            text-align: center;
+            margin: var(--spacing-md) 0;
+            position: relative;
+        }
+
+        .submit-button-wrapper::before,
+        .submit-button-wrapper::after {
+            content: '';
+            position: absolute;
+            width: 40px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            top: 50%;
+        }
+
+        .submit-button-wrapper::before {
+            left: calc(50% - 120px);
+        }
+
+        .submit-button-wrapper::after {
+            right: calc(50% - 120px);
+        }
+
+        .submit-button[disabled] {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .popup-close {
+            background: var(--gradient-secondary);
+            border: none;
+            padding: 12px 32px;
+            font-size: 1em;
+            border-radius: 12px;
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+            font-family: "SF Pro TC", "SF Pro Text", "Microsoft JhengHei", sans-serif;
+        }
+
+        .popup-close:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(3, 204, 255, 0.4);
+        }
+
+        .popup-close:active {
+            transform: translateY(1px);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: var(--spacing-md) var(--spacing-sm);
+            }
+            .content-wrapper {
+                padding: 0 var(--spacing-sm);
+                gap: var(--spacing-lg);
+                max-width: 100%;
+            }
+            textarea {
+                min-height: 150px;
+                padding: var(--spacing-md);
+                font-size: 1em;
+            }
+            .led-info {
+                padding: var(--spacing-lg);
+            }
+            .led-info h3 {
+                font-size: 1.2em;
+            }
+            .led-info p {
+                padding: var(--spacing-sm);
+            }
+            .submit-button {
+                padding: 14px 36px;
+                font-size: 1em;
+            }
+        }
+
+        @media (max-height: 768px) {
+            .liquid-title.en {
+                font-size: 2.2em;
+            }
+            .liquid-title.zh {
+                font-size: 1.8em;
+            }
+            textarea {
+                min-height: 100px;
+            }
+            .led-info {
+                padding: var(--spacing-md);
+            }
         }
     </style>
 </head>
 <body>
+    <div class="glow-container">
+        <div class="glow glow-1"></div>
+        <div class="glow glow-2"></div>
+    </div>
     <div class="container">
-        <h1>🏥 健康互動小幫手</h1>
+        <div class="glow-effect glow-1"></div>
+        <div class="glow-effect glow-2"></div>
+        <div class="glow-effect glow-3"></div>
         
-        <div class="input-section">
-            <textarea id="userInput" placeholder="請分享今天的工作狀況，例如：
-- 今天坐了很久嗎？
-- 有做什麼運動嗎？
-- 感覺哪裡不舒服？"></textarea>
-            <br>
-            <button onclick="sendMessage()">送出回饋</button>
-        </div>
-
-        <div class="response" id="aiResponse">
-            <div class="ai-message">您好！我是您的健康小幫手，請告訴我今天的狀況，我會給您合適的建議 😊</div>
-        </div>
-
-        <!-- 彈窗遮罩 -->
-        <div id="popupOverlay" class="popup-overlay"></div>
-
-        <!-- 警示彈窗 -->
-        <div id="warningPopup" class="popup popup-warning">
-            <div class="popup-icon">⚠️</div>
-            <div class="popup-message"></div>
-            <div class="led-animation warning-blink" style="margin: 15px auto;"></div>
-            <button class="popup-close" style="background-color: #ff6b6b; color: white;" onclick="closePopup('warningPopup')">我知道了</button>
-        </div>
-
-        <!-- 鼓勵彈窗 -->
-        <div id="goodPopup" class="popup popup-good">
-            <div class="popup-icon">🌟</div>
-            <div class="popup-message"></div>
-            <div class="led-animation good-blink" style="margin: 15px auto;"></div>
-            <button class="popup-close" style="background-color: #6bff6b; color: white;" onclick="closePopup('goodPopup')">太棒了</button>
-        </div>
-
-        <!-- 確認彈窗 -->
-        <div id="testPopup" class="popup popup-test">
-            <div class="popup-icon">✅</div>
-            <div class="popup-message"></div>
-            <div class="led-animation test-blink" style="margin: 15px auto;"></div>
-            <button class="popup-close" style="background-color: #6b6bff; color: white;" onclick="closePopup('testPopup')">確認</button>
-        </div>
-
-        <div class="led-guide">
-            <h3>💡 LED 指示燈說明</h3>
-            <div class="led-pattern">
-                <div class="led-animation warning-blink"></div>
-                <div>
-                    <strong>警示模式</strong>（快速閃爍）
-                    <p>當系統偵測到：久坐、疲勞、不適等狀況時，LED 會快速閃爍 15 次，提醒您注意健康。</p>
-                </div>
+        <div class="content-wrapper">
+            <div class="liquid-title-container">
+                <div class="liquid-glass"></div>
+                <h1 class="liquid-title en">Health Assistant</h1>
+                <h1 class="liquid-title zh">健康互動小幫手</h1>
             </div>
-            <div class="led-pattern">
-                <div class="led-animation good-blink"></div>
-                <div>
-                    <strong>鼓勵模式</strong>（緩慢閃爍）
-                    <p>當您報告有運動、散步、伸展等好習慣時，LED 會緩慢閃爍 5 次表示讚許。</p>
-                </div>
+            
+            <div class="input-section">
+                <textarea id="userInput" placeholder="請分享今天的工作狀況，例如：&#13;&#10;- 今天工作很久嗎？&#13;&#10;- 身體有感到動障？&#13;&#10;- 或覺得哪裡不舒服？"></textarea>
             </div>
-            <div class="led-pattern">
-                <div class="led-animation test-blink"></div>
-                <div>
-                    <strong>測試模式</strong>（單次閃爍）
-                    <p>系統啟動或測試連接時，LED 會進行單次閃爍確認正常運作。</p>
-                </div>
+            
+            <div class="submit-button-wrapper">
+                <button class="submit-button" onclick="sendMessage()">送出回覆</button>
+            </div>
+
+            <div class="led-info">
+                <h3>LED 指示燈說明</h3>
+                <p><span class="status-dot warning"></span> 警告模式：快速閃爍</p>
+                <p><span class="status-dot good"></span> 鼓勵模式：呼吸燈效果</p>
+                <p><span class="status-dot test"></span> 測試模式：單次閃爍</p>
             </div>
         </div>
     </div>
 
+    <!-- 彈窗遮罩 -->
+    <div id="popupOverlay" class="popup-overlay"></div>
+
+    <!-- 警示彈窗 -->
+    <div id="warningPopup" class="popup popup-warning">
+        <div class="popup-icon">⚠️</div>
+        <div class="popup-message"></div>
+        <div class="led-animation warning-blink" style="margin: 15px auto;"></div>
+        <button class="popup-close" style="background-color: #ff6b6b; color: white;" onclick="closePopup('warningPopup')">我知道了</button>
+    </div>
+
+    <!-- 鼓勵彈窗 -->
+    <div id="goodPopup" class="popup popup-good">
+        <div class="popup-icon">🌟</div>
+        <div class="popup-message"></div>
+        <div class="led-animation good-blink" style="margin: 15px auto;"></div>
+        <button class="popup-close" style="background-color: #6bff6b; color: white;" onclick="closePopup('goodPopup')">太棒了</button>
+    </div>
+
+    <!-- 確認彈窗 -->
+    <div id="testPopup" class="popup popup-test">
+        <div class="popup-icon">✅</div>
+        <div class="popup-message"></div>
+        <div class="led-animation test-blink" style="margin: 15px auto;"></div>
+        <button class="popup-close" style="background-color: #6b6bff; color: white;" onclick="closePopup('testPopup')">確認</button>
+    </div>
+
     <script>
-        // 確保使用正確的 API 端點
-        const API_URL = 'http://localhost:5001';
-        
-        // 檢查 Arduino 連接狀態
-        async function checkArduinoStatus() {
+        async function sendMessage() {
+            const userInput = document.getElementById('userInput').value.trim();
+            
+            if (!userInput) {
+                alert('請輸入一些內容');
+                return;
+            }
+
+            // 禁用按鈕，防止重複提交
+            const submitButton = document.querySelector('.submit-button');
+            submitButton.disabled = true;
+            submitButton.textContent = '處理中...';
+
             try {
-                const response = await fetch(`${API_URL}/status`);
+                console.log('Sending request to server...');
+                const response = await fetch('/control', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ message: userInput })
+                });
+
+                console.log('Got response:', response);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
                 const data = await response.json();
-                return data.status === 'success';
+                console.log('Response data:', data);
+                
+                // 根據不同的命令顯示不同的彈窗
+                if (data.command === 'WARNING') {
+                    showPopup('warningPopup', data.response);
+                } else if (data.command === 'GOOD') {
+                    showPopup('goodPopup', data.response);
+                } else if (data.command === 'TEST') {
+                    showPopup('testPopup', data.response);
+                }
+
+                // 清空輸入框
+                document.getElementById('userInput').value = '';
+
             } catch (error) {
-                console.error('狀態檢查錯誤:', error);
-                return false;
+                console.error('Error:', error);
+                alert('發生錯誤：' + error.message);
+            } finally {
+                // 恢復按鈕狀態
+                submitButton.disabled = false;
+                submitButton.textContent = '送出回覆';
             }
         }
 
-        // 顯示彈窗
-        function showPopup(type, message) {
+        function showPopup(popupId, message) {
             const overlay = document.getElementById('popupOverlay');
-            const popup = document.getElementById(`${type}Popup`);
-            const messageDiv = popup.querySelector('.popup-message');
+            const popup = document.getElementById(popupId);
             
-            messageDiv.textContent = message;
+            if (!overlay || !popup) {
+                console.error('找不到彈窗元素');
+                return;
+            }
+
+            // 顯示遮罩
             overlay.style.display = 'block';
+            
+            // 更新並顯示彈窗
+            const messageElement = popup.querySelector('.popup-message');
+            if (messageElement) {
+                messageElement.textContent = message;
+            }
             popup.style.display = 'block';
         }
 
-        // 關閉彈窗
         function closePopup(popupId) {
             const overlay = document.getElementById('popupOverlay');
             const popup = document.getElementById(popupId);
             
+            if (!overlay || !popup) {
+                console.error('找不到彈窗元素');
+                return;
+            }
+
+            // 隱藏遮罩和彈窗
             overlay.style.display = 'none';
             popup.style.display = 'none';
         }
-        
-        async function sendMessage() {
-            const userInput = document.getElementById('userInput').value;
-            const button = document.querySelector('button');
-            const responseDiv = document.getElementById('aiResponse');
-            
-            if (!userInput.trim()) {
-                showPopup('test', '請輸入一些內容！');
-                return;
+
+        // 添加鍵盤事件監聽
+        document.getElementById('userInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
             }
-            
-            button.disabled = true;
-            responseDiv.innerHTML = '<div class="ai-message">思考中...</div>';
-            
-            try {
-                // 先檢查 Arduino 狀態
-                const isConnected = await checkArduinoStatus();
-                if (!isConnected) {
-                    showPopup('test', 'Arduino 未連接，請檢查連線後重試。');
-                    responseDiv.innerHTML = '<div class="ai-message">⚠️ Arduino 未連接，請檢查連線後重試。</div>';
-                    return;
-                }
-                
-                const response = await fetch(`${API_URL}/control`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ message: userInput })
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                
-                if (data.status === 'error') {
-                    showPopup('test', data.message);
-                    responseDiv.innerHTML = `
-                        <div class="ai-message">
-                            ⚠️ ${data.message}
-                            <div style="margin-top: 10px; font-size: 14px; color: #666;">
-                                ${data.led_status || ''}
-                            </div>
-                        </div>`;
-                    return;
-                }
-                
-                // 根據命令類型決定彈窗類型
-                let popupType, popupMessage;
-                switch (data.command) {
-                    case 'WARNING':
-                        popupType = 'warning';
-                        popupMessage = `${data.message}\n\n${data.led_status}`;
-                        break;
-                    case 'GOOD':
-                        popupType = 'good';
-                        popupMessage = `${data.message}\n\n${data.led_status}`;
-                        break;
-                    default:
-                        popupType = 'test';
-                        popupMessage = `${data.message}\n\n${data.led_status}`;
-                }
-                
-                // 立即顯示彈窗
-                showPopup(popupType, popupMessage);
-                
-                // 更新回應區域
-                responseDiv.innerHTML = `
-                    <div class="ai-message">
-                        ${data.message}
-                        <div style="margin-top: 10px; font-size: 14px; color: #666;">
-                            ${data.led_status}
-                        </div>
-                    </div>`;
-                
-            } catch (error) {
-                console.error('錯誤:', error);
-                showPopup('test', '發生錯誤，請檢查連線狀態。');
-                responseDiv.innerHTML = `
-                    <div class="ai-message">
-                        抱歉，發生了一些錯誤：
-                        <div style="margin-top: 10px; font-size: 14px; color: #ff0000;">
-                            ${error.message}
-                        </div>
-                        <div style="margin-top: 5px; font-size: 12px; color: #666;">
-                            請確認：
-                            <ul>
-                                <li>Arduino 是否正確連接</li>
-                                <li>伺服器是否正在運行</li>
-                                <li>網路連線是否正常</li>
-                            </ul>
-                        </div>
-                    </div>`;
-            } finally {
-                button.disabled = false;
-                document.getElementById('userInput').value = '';
-            }
-        }
+        });
+
+        // 頁面載入時檢查並初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Page loaded, initializing...');
+        });
     </script>
 </body>
 </html>

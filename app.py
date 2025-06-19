@@ -110,15 +110,8 @@ def init_arduino():
         return None
 
 @app.route('/')
-def home():
-    try:
-        return render_template('index.html')
-    except Exception as e:
-        logger.error(f"模板渲染錯誤: {str(e)}")
-        return jsonify({
-            'status': 'error',
-            'message': f'頁面載入錯誤: {str(e)}'
-        }), 500
+def index():
+    return render_template('index.html')
 
 @app.route('/status')
 def status():
@@ -147,66 +140,85 @@ def status():
 @app.route('/control', methods=['POST'])
 def control():
     global arduino
-    message = request.json.get('message', '')
-    logger.info(f"收到用戶輸入: {message}")
-
-    # 檢查並重試 Arduino 連接
-    retry_count = 0
-    while not arduino and retry_count < 3:
-        arduino = init_arduino()
-        retry_count += 1
-        if not arduino:
-            time.sleep(1)
-
-    if not arduino:
-        return jsonify({
-            'status': 'error',
-            'message': '無法連接 Arduino，請檢查連接',
-            'led_status': 'LED 未連接'
-        })
-
-    # 決定 LED 模式
-    if "久坐" in message or "痛" in message or "累" in message or "不舒服" in message:
-        led_command = "WARNING"
-        response_message = "請注意！建議您起身活動一下，做些簡單的伸展運動。"
-        led_status_message = "LED 正在進行警告模式：快速閃爍 15 次"
-    elif "運動" in message or "散步" in message or "伸展" in message:
-        led_command = "GOOD"
-        response_message = "太棒了！保持運動習慣對健康很有幫助。"
-        led_status_message = "LED 正在進行鼓勵模式：緩慢閃爍 5 次"
-    else:
-        led_command = "TEST"
-        response_message = "收到您的訊息。"
-        led_status_message = "LED 正在進行確認模式：單次閃爍"
-
-    # 控制 LED
     try:
-        with arduino_lock:
-            logger.info(f"發送命令到 Arduino: {led_command}")
-            arduino.write(f"{led_command}\n".encode())
-            
-            # 立即返回響應，不等待 LED 閃爍完成
-            return jsonify({
-                'status': 'success',
-                'message': response_message,
-                'led_status': led_status_message,
-                'command': led_command  # 添加指令類型以便前端識別
-            })
+        data = request.get_json()
+        message = data.get('message', '').lower()
+        
+        # 初始化回應
+        response = {
+            'command': 'TEST',
+            'response': '收到訊息，正在處理...'
+        }
+        
+        # 根據訊息內容決定 LED 模式
+        warning_keywords = ['疲倦', '疼痛', '不舒服', '緊繃', '壓力', '頭痛', '眼睛酸', '肩頸痛']
+        positive_keywords = [
+            '運動', '伸展', '散步', '跑步', '健身', '瑜伽', '騎車', '游泳',
+            '休息', '放鬆', '良好', '舒服', '正常',
+            '喝水', '起身走動', '伸展操', '休息一下'
+        ]
+        
+        # 判斷訊息類型
+        if any(word in message for word in warning_keywords):
+            response['command'] = 'WARNING'
+            response['response'] = '請注意！建議您立即休息，並做一些伸展運動。'
+        elif any(word in message for word in positive_keywords):
+            response['command'] = 'GOOD'
+            positive_responses = [
+                '太棒了！運動對身體很有幫助，繼續保持！',
+                '做得好！適時的休息和運動能提高工作效率！',
+                '很好的習慣！保持運動能讓身心都更健康！',
+                '讚！這些都是很好的健康習慣，請繼續保持！'
+            ]
+            import random
+            response['response'] = random.choice(positive_responses)
+        else:
+            response['command'] = 'TEST'
+            response['response'] = '謝謝您的回饋！我們會持續關注您的健康狀況。'
+
+        # 檢查 Arduino 連接狀態
+        if not arduino:
+            arduino = init_arduino()
+        
+        # 控制 Arduino（如果連接成功）
+        if arduino:
+            try:
+                with arduino_lock:
+                    # 清空緩衝區
+                    arduino.flushInput()
+                    arduino.flushOutput()
+                    
+                    # 發送命令
+                    arduino.write(f"{response['command']}\n".encode())
+                    time.sleep(0.1)  # 短暫等待確保命令被發送
+                    
+                    # 嘗試讀取回應（非阻塞）
+                    if arduino.in_waiting:
+                        arduino_response = arduino.readline().decode().strip()
+                        logger.info(f"Arduino 回應: {arduino_response}")
+                        
+                return jsonify(response)
+            except Exception as e:
+                logger.error(f"Arduino 通訊錯誤: {str(e)}")
+                # Arduino 通訊錯誤，但仍然返回回應
+                return jsonify(response)
+        else:
+            logger.warning("Arduino 未連接，僅返回文字回應")
+            # 即使 Arduino 未連接，也返回文字回應
+            return jsonify(response)
             
     except Exception as e:
-        logger.error(f"Arduino 控制錯誤: {str(e)}")
-        # 發生錯誤時重置連接
-        try:
-            if arduino:
-                arduino.close()
-            arduino = None
-        except:
-            pass
+        logger.error(f"處理請求時發生錯誤: {str(e)}")
         return jsonify({
             'status': 'error',
-            'message': f'Arduino 控制錯誤: {str(e)}',
-            'led_status': 'LED 控制失敗'
+            'message': '系統暫時無法處理請求，但您的輸入已經收到。'
         })
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    # 初始化 Arduino
+    arduino = init_arduino()
+    if not arduino:
+        logger.warning("Arduino 初始化失敗，將無法控制 LED")
+    
+    # 啟動 Flask 應用
+    app.run(debug=True, port=5001)
